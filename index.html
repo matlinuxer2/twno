@@ -1,0 +1,186 @@
+<html>
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+</head>
+
+<body>
+	<script src="https://code.highcharts.com/highcharts.js"></script>
+	<script src="https://code.highcharts.com/modules/exporting.js"></script>
+	<script src="https://code.highcharts.com/modules/export-data.js"></script>
+	<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+
+	<figure class="highcharts-figure">
+		<div id="container"></div>
+		<p class="highcharts-description">
+		資料來源: 
+		<a href="https://www.audit.gov.tw/p/412-1000-97.php?Lang=zh-tw">審計部總決算審核報告</a>
+		,  <a href="https://bas.kcg.gov.tw/cp.aspx?n=77B47D1275C1A864">高雄市主計處</a>
+		,  <a href="http://web02.mof.gov.tw/njswww/WebProxy.aspx?sys=100&funid=defjspf2">財政部財政統計資料庫</a>
+		</p>
+	</figure>
+
+	<script>
+		var result = {};
+
+		fetch("./data1/data.json")
+			.then(response => response.json())
+			.then(obj => {
+				let yrs = Object.keys(obj);
+				let items = {}
+				yrs.forEach(yr => {
+					let k2 = Object.keys(obj[yr]);
+					k2.forEach(item => {
+						items[item] = 1;
+					});
+				});
+				items = Object.keys(items);
+
+				let matrix = {};
+				items.forEach(item => {
+					matrix[item] = [];
+					yrs.forEach(yr => {
+						if (typeof (obj[yr][item]) != undefined && obj[yr][item] != null) {
+							val = obj[yr][item]["單位"] * obj[yr][item]["預算"];
+							val = val / (10000 * 10000);  // 億
+							val = parseFloat(val.toFixed(2));
+						}
+						else {
+							val = null;
+						}
+						matrix[item].push(val);
+					});
+				});
+
+				let series = [];
+				items.forEach(item => {
+					let xx = {
+						"name": item,
+						"visible": false,
+						"stack": "data1",
+						"data": matrix[item]
+					};
+					series.push(xx);
+				});
+
+				result["data1"] = {};
+				result["data1"]["yrs"] = yrs;
+				result["data1"]["names"] = items;
+				result["data1"]["series"] = series;
+			})
+			.then(res => {
+				fetch("./data2/data.json")
+					.then(response => response.json())
+					.then(obj => {
+						console.log(Object.keys(obj));
+
+						let series1 = {
+							"name": "公共債務",
+							"visible": true,
+							"stack": "data3",
+							"data": []
+						}
+
+						let series2 = {
+							"name": "舉債增加",
+							"visible": true,
+							"stack": "data2",
+							"data": []
+						}
+
+						Object.keys(obj).forEach(yr => {
+							console.log(obj[yr]);
+							let val1 = obj[yr]["單位"] * obj[yr]["公共債務"];
+							val1 = val1 / (10000 * 10000);  // 億
+							val1 = parseFloat(val1.toFixed(2));
+
+							let val2 = obj[yr]["單位"] * obj[yr]["舉債增加"];
+							val2 = val2 / (10000 * 10000);  // 億
+							val2 = parseFloat(val2.toFixed(2));
+
+							series1.data.push(val1);
+							series2.data.push(val2);
+						});
+
+						console.log(series1);
+						console.log(series2);
+						result["data1"]["series"].push(series1);
+						result["data1"]["series"].push(series2);
+					})
+					.then(res => {
+						Highcharts.chart('container', {
+							chart: {
+								type: 'column',
+								height: '650px'
+							},
+							title: {
+								text: '高雄市歷年預算及債務'
+							},
+							xAxis: {
+								categories: result["data1"]["yrs"],
+							},
+							yAxis: {
+								title: {
+									text: '新台幣(億)'
+								},
+								stackLabels: {
+									enabled: true,
+									style: {
+										fontWeight: 'bold',
+										color: ( // theme
+											Highcharts.defaultOptions.title.style &&
+											Highcharts.defaultOptions.title.style.color
+										) || 'gray'
+									}
+								}
+							},
+							credits: {
+								enabled: false
+							},
+							legend: {
+								align: 'right',
+								x: -30,
+								verticalAlign: 'top',
+								y: 25,
+								floating: false,
+								backgroundColor: Highcharts.defaultOptions.legend.backgroundColor || 'white',
+								borderColor: '#CCC',
+								borderWidth: 1,
+								shadow: false
+							},
+							tooltip: {
+								headerFormat: '<b>{point.x}</b><br/>',
+								pointFormat: '{series.name}: {point.y}<br/>Total: {point.stackTotal}'
+							},
+							plotOptions: {
+								column: {
+									stacking: 'normal',
+									dataLabels: {
+										enabled: true
+									}
+								}
+							},
+
+							responsive: {
+								rules: [{
+									condition: {
+										maxWidth: 500
+									},
+									chartOptions: {
+										legend: {
+											layout: 'horizontal',
+											align: 'center',
+											verticalAlign: 'bottom'
+										}
+									}
+								}]
+							},
+
+							series: result["data1"]["series"]
+						});
+					});
+			});
+	</script>
+</body>
+
+</html>
