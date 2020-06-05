@@ -1,0 +1,79 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+  </head>
+<body>
+
+<div id="container" style="min-width: 100%; height: 100%; margin: 0 auto"></div>
+
+<script>
+var result = {};
+fetch("./data.json")
+	.then(response => response.json())
+	.then(obj => {
+		result["data3"] = {}
+		result["data3"]["series"] = []
+		console.log(obj);
+
+		let yrs = Object.keys(obj);
+		yrs.forEach( (yr) => {
+			let res = {};
+			res["name"] = String(yr);
+			res["visible"] = false;
+			res["data"] = obj[yr];
+			console.log( res );
+			result["data3"]["series"].push(res);
+		});
+		let len = result["data3"]["series"].length;
+		result["data3"]["series"][len-1]["visible"] = true;
+	})
+	.then( () => {show_chart();} );
+
+function show_chart(){
+	Highcharts.chart('container', {
+
+		title: {
+			text: '分齡人口分佈'
+		},
+
+		subtitle: {
+			text: '資料來源: 內政統計月報 <br/> http://sowf.moi.gov.tw/stat/month/list.htm'
+		},
+
+		yAxis: {
+			title: {
+				text: '人口數'
+			}
+		},
+
+		plotOptions: {
+			series: {
+				label: {
+					connectorAllowed: false
+				},
+				pointStart: 0
+			}
+		},
+
+		responsive: {
+			rules: [{
+				condition: {
+					maxWidth: 500
+				},
+				chartOptions: {
+					legend: {
+						layout: 'horizontal',
+						align: 'center',
+						verticalAlign: 'bottom'
+					}
+				}
+			}]
+		},
+		series: result["data3"]["series"]
+	});
+}
+</script>
+</body>
+
