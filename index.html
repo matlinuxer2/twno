@@ -72,8 +72,6 @@
 				fetch("./data2/data.json")
 					.then(response => response.json())
 					.then(obj => {
-						console.log(Object.keys(obj));
-
 						let series1 = {
 							"name": "公共債務",
 							"visible": true,
@@ -89,7 +87,6 @@
 						}
 
 						Object.keys(obj).forEach(yr => {
-							console.log(obj[yr]);
 							let val1 = obj[yr]["單位"] * obj[yr]["公共債務"];
 							val1 = val1 / (10000 * 10000);  // 億
 							val1 = parseFloat(val1.toFixed(2));
@@ -102,8 +99,6 @@
 							series2.data.push(val2);
 						});
 
-						console.log(series1);
-						console.log(series2);
 						result["data1"]["series"].push(series1);
 						result["data1"]["series"].push(series2);
 					})
